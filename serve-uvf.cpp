@@ -57,9 +57,24 @@ int main(int argc, char* argv[])
   do {
     wait_for_event(info);
 
-    for(watchlist::const_iterator ev = info.begin(); ev != info.end(); ++ev) {
-      (*ev)->handle_event();
-    }
+    bool handled;
+    do {
+      handled = false;
+      try {
+        for(watchlist::const_iterator ev = info.begin(); ev != info.end();
+            ++ev) {
+          (*ev)->handle_event();
+          handled = true;
+        }
+      } catch(const watchable::create & nw) {
+        std::clog << "adding new watchable entry " << nw.entry.get() << "\n";
+        info.push_back(nw.entry);
+        handled = true;
+      } catch(const watchable::remove & w) {
+        std::clog << "SHOULD remove watchable w/ fd " << w.fd << "\n";
+        handled = true;
+      }
+    } while(handled);
   } while(1);
 
   return 0;
@@ -113,24 +128,22 @@ void wait_for_event(const watchlist& watches)
     fds.get()[i].revents = 0;
   }
   int revents = poll(fds.get(), watches.size(), -1);
-  std::cerr << revents << " events occurred.\n";
+  std::clog << revents << " events occurred.\n";
   if(revents == -1) {
-    // create/return SignalEvent ...
-    std::cerr << "[UNIMPLEMENTED] fake a signal event...\n";
+    std::cerr << "poll error: " << errno << "\n";
     return;
-  } else {
-    assert(revents > 0);
-    struct pollfd* begin = fds.get();
-    struct pollfd* end = fds.get() + watches.size();
-    size_t i=0;
-    for(struct pollfd* cur = begin; cur != end; ++cur, ++i) {
-      if(cur->revents & POLLNVAL) {
-        throw "invalid file descriptor...\n";
-      }
-      if(cur->revents & POLLIN || cur->revents & POLLPRI ||
-         cur->revents & POLLERR || cur->revents & POLLHUP) {
-        watches[i]->mark_for_handling(cur->revents);
-      }
+  }
+  assert(revents > 0);
+  struct pollfd* begin = fds.get();
+  struct pollfd* end = fds.get() + watches.size();
+  size_t i=0;
+  for(struct pollfd* cur = begin; cur != end; ++cur, ++i) {
+    if(cur->revents & POLLNVAL) {
+      throw "invalid file descriptor...\n";
+    }
+    if(cur->revents & POLLIN || cur->revents & POLLPRI ||
+       cur->revents & POLLERR || cur->revents & POLLHUP) {
+      watches[i]->mark_for_handling(cur->revents);
     }
   }
 }

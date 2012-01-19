@@ -10,8 +10,13 @@ struct watchable {
   virtual void mark_for_handling(uint32_t flags) = 0;
   virtual void handle_event() = 0;
 
-  struct new_watchable {
+  struct create {
+    create(std::shared_ptr<struct watchable> w) : entry(w) { }
     std::shared_ptr<struct watchable> entry;
+  };
+  struct remove {
+    remove(int f) : fd(f) { }
+    int fd;
   };
 };
 
