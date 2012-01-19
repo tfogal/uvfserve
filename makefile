@@ -1,5 +1,5 @@
 CXXFLAGS=-ggdb -Wall -Wextra -std=c++0x -pedantic
-OBJ=serve-uvf.o socket-event.o socket-watchable.o
+OBJ=serve-uvf.o socket-watchable.o
 
 all: $(OBJ) uvfserve
 
