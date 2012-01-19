@@ -21,6 +21,7 @@ typedef std::vector<std::shared_ptr<watchable> > watchlist;
 watchlist initialize_watches(std::vector<std::string> dirs);
 std::shared_ptr<watchable> initialize_server(size_t port);
 void wait_for_event(const watchlist&);
+void term(int);
 
 int main(int argc, char* argv[])
 {
@@ -42,7 +43,7 @@ int main(int argc, char* argv[])
   }
 
   // set up an event handler for sigterm ...
-  { }
+  signal(SIGTERM, term);
 
   // now we have our initial file list.  set up some watches so we'll know if
   // something changes.
@@ -146,4 +147,8 @@ void wait_for_event(const watchlist& watches)
       watches[i]->mark_for_handling(cur->revents);
     }
   }
+}
+
+void term(int)
+{
 }
