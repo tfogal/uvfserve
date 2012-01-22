@@ -8,7 +8,7 @@ class socket_watchable : public fd_watchable {
     socket_watchable(int fd) : fd_watchable(fd), bits(0) { }
 
     virtual void mark_for_handling(uint32_t flags);
-    virtual void handle_event();
+    virtual bool handle_event();
 
   protected:
     short bits;
@@ -17,7 +17,7 @@ class socket_watchable : public fd_watchable {
 class listen_socket_watchable: public socket_watchable {
   public:
     listen_socket_watchable(int fd) : socket_watchable(fd) { }
-    virtual void handle_event();
+    virtual bool handle_event();
 };
 
 #endif /* UVFSERVER_SOCKET_WATCHABLE_H */

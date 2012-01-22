@@ -8,7 +8,9 @@ struct watchable {
   virtual ~watchable() { }
   virtual int fd() const = 0;
   virtual void mark_for_handling(uint32_t flags) = 0;
-  virtual void handle_event() = 0;
+  // @return true if it did something.
+  virtual bool handle_event() = 0;
+  virtual void close() = 0;
 
   struct create {
     create(std::shared_ptr<struct watchable> w) : entry(w) { }
@@ -25,6 +27,9 @@ class fd_watchable : public watchable {
     fd_watchable(int fd) : fd_(fd) { }
 
     virtual int fd() const { return this->fd_; }
+    virtual void close();
+
+    virtual bool operator==(int fd) const { return this->fd_ == fd; }
 
   private:
     int fd_;

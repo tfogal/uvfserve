@@ -16,13 +16,18 @@ void socket_watchable::mark_for_handling(uint32_t flags)
   this->bits = static_cast<short>(flags);
 }
 
-void socket_watchable::handle_event()
+bool socket_watchable::handle_event()
 {
+  bool did_something = false;
   if(this->bits & POLLIN) {
+    did_something = true;
     std::cout << "data to read: '";
     std::shared_ptr<int8_t> buf(new int8_t[8192],
                                 nonstd::array_deleter<int8_t>);
     ssize_t bytes = read(this->fd(), buf.get(), 8192);
+    if(bytes == 0) { // disconnect.
+      throw watchable::remove(this->fd());
+    }
     std::copy(buf.get(), buf.get()+bytes,
               std::ostream_iterator<char>(std::cout, ""));
     std::cout << "' (" << bytes << " bytes)\n";
@@ -36,15 +41,17 @@ void socket_watchable::handle_event()
   }
   if(this->bits & POLLHUP) {
     std::cerr << "hup on " << this->fd() << "\n";
+    did_something = true;
     throw watchable::remove(this->fd());
   }
   this->bits = 0;
+  return did_something;
 }
 
 // similar to socket_watchable's implementation, except that POLLIN
 // means we should just accept someone, and POLLHUP no longer makes
 // sense.
-void listen_socket_watchable::handle_event() {
+bool listen_socket_watchable::handle_event() {
   std::clog << "listen socket event handling...\n";
   if(this->bits & POLLIN) {
     struct sockaddr_in saddr;
@@ -58,6 +65,7 @@ void listen_socket_watchable::handle_event() {
       std::cerr << "error accepting from fd(" << this->fd() << "); errno="
                 << errno << "\n";
     }
+    this->bits = 0;
     throw create(std::shared_ptr<watchable>(new socket_watchable(desc)));
   }
   if(this->bits & POLLPRI) {
@@ -71,4 +79,5 @@ void listen_socket_watchable::handle_event() {
     std::cerr << "listen hup on " << this->fd() << "\n";
   }
   this->bits = 0;
+  return false;
 }

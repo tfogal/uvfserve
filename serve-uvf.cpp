@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <arpa/inet.h>
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <netdb.h>
@@ -14,6 +16,8 @@
 
 #include "nonstd.h"
 #include "socket-watchable.h"
+#include "shutdown.h"
+#include "stdin-watchable.h"
 #include "watchable.h"
 
 std::vector<std::string> scan_for_uvfs(std::string directory);
@@ -22,6 +26,13 @@ watchlist initialize_watches(std::vector<std::string> dirs);
 std::shared_ptr<watchable> initialize_server(size_t port);
 void wait_for_event(const watchlist&);
 void term(int);
+
+struct fd_equiv : public std::binary_function<std::shared_ptr<watchable>,
+                                              int, bool> {
+  bool operator()(const std::shared_ptr<watchable> w, int fd) {
+    return w->fd() == fd;
+  }
+};
 
 int main(int argc, char* argv[])
 {
@@ -42,8 +53,9 @@ int main(int argc, char* argv[])
     files.insert(files.end(), uvfs.begin(), uvfs.end());
   }
 
-  // set up an event handler for sigterm ...
+  // set up an event handler for killing it...
   signal(SIGTERM, term);
+  signal(SIGINT, term);
 
   // now we have our initial file list.  set up some watches so we'll know if
   // something changes.
@@ -53,6 +65,8 @@ int main(int argc, char* argv[])
   {
     info.push_back(initialize_server(4029));
   }
+
+  info.push_back(std::shared_ptr<watchable>(new stdin_watchable()));
 
   // finally, loop waiting for a file to change or a connection to occur.
   do {
@@ -64,19 +78,28 @@ int main(int argc, char* argv[])
       try {
         for(watchlist::const_iterator ev = info.begin(); ev != info.end();
             ++ev) {
-          (*ev)->handle_event();
-          handled = true;
+          handled = (*ev)->handle_event();
         }
       } catch(const watchable::create & nw) {
         std::clog << "adding new watchable entry " << nw.entry.get() << "\n";
         info.push_back(nw.entry);
         handled = true;
       } catch(const watchable::remove & w) {
-        std::clog << "SHOULD remove watchable w/ fd " << w.fd << "\n";
+        std::clog << "removing watchable w/ fd " << w.fd << "\n";
+        using namespace std::placeholders;
+        watchlist::iterator rm = std::remove_if(info.begin(), info.end(),
+                                                std::bind(fd_equiv(),_1,w.fd));
+        info.erase(rm, info.end());
         handled = true;
       }
     } while(handled);
-  } while(1);
+  } while(!get_terminate_flag());
+
+  std::clog << "Closing " << info.size() << " active FDs...\n";
+  for(watchlist::const_iterator ev = info.begin(); ev != info.end(); ++ev) {
+    (*ev)->close();
+  }
+  info.clear();
 
   return 0;
 }
@@ -151,4 +174,5 @@ void wait_for_event(const watchlist& watches)
 
 void term(int)
 {
+  set_terminate_flag(true);
 }
