@@ -22,9 +22,8 @@
 #include "shutdown.h"
 #include "stdin-watchable.h"
 #include "watchable.h"
+#include "watchlist.h"
 
-typedef std::vector<std::shared_ptr<watchable> > watchlist;
-watchlist initialize_watches(std::vector<std::string> dirs);
 std::shared_ptr<watchable> initialize_server(size_t port);
 void wait_for_event(const watchlist&);
 void term(int);
@@ -107,12 +106,6 @@ int main(int argc, char* argv[])
   return 0;
 }
 
-watchlist initialize_watches(std::vector<std::string> /*dirs*/)
-{
-  watchlist retval;
-  // FIXME implement!!!!
-  return retval;
-}
 std::shared_ptr<watchable> initialize_server(size_t port)
 {
   int sck = socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, 0);

@@ -5,5 +5,6 @@
 #include <vector>
 
 std::vector<std::string> scan_for_uvfs(std::string directory);
+bool is_uvf(std::string filename);
 
 #endif /* UVFSERVE_FS_SCAN_H */

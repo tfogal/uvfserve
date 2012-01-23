@@ -6,8 +6,6 @@
 #include <unistd.h>
 #include "fs-scan.h"
 
-static bool is_uvf(std::string filename);
-
 std::vector<std::string> scan_for_uvfs(std::string directory)
 {
   size_t len = offsetof(struct dirent, d_name) +
@@ -45,14 +43,15 @@ static void first_block(const std::string& filename,
     return;
   }
   ifs.read(reinterpret_cast<char*>(&block[0]), 8);
-  if(ifs.fail()) { std::clog << "fail!\n"; }
+  if(ifs.fail()) { block.resize(0); std::clog << "fail!\n"; }
   ifs.close();
 }
 
-static bool is_uvf(std::string filename)
+bool is_uvf(std::string filename)
 {
   std::vector<int8_t> magic;
   first_block(filename, magic);
+  if(magic.size() == 0) { return false; } // read failed.
 
   return magic[0] == 'U' &&
          magic[1] == 'V' &&
