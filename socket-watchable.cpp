@@ -15,11 +15,13 @@
 
 socket_watchable::socket_watchable(int fd) : fd_watchable(fd), bits(0)
 {
-  std::vector<command> cmds(2);
+  std::vector<command> cmds(3);
   cmds[0].name = "quit";
   cmds[0].func = disconnect;
   cmds[1].name = "list";
   cmds[1].func = list;
+  cmds[2].name = "sendfile";
+  cmds[2].func = sendf;
   this->set_command_list(cmds);
 }
 

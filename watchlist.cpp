@@ -41,7 +41,7 @@ class root_in_watchable : public fd_watchable {
     // needs the watch descriptor and a list of directories these files might
     // be in.
     root_in_watchable(int wd, std::vector<std::string> d):
-      fd_watchable(wd), dirs(d) { }
+      fd_watchable(wd), flags(0), dirs(d) { }
     virtual void mark_for_handling(uint32_t f) {
       this->flags = f;
     }
@@ -51,7 +51,7 @@ class root_in_watchable : public fd_watchable {
       // just using a base struct inotify_event isn't good enough, I guess
       // because the 'name' field is variably sized.  So just give it a giant
       // f-ing buffer and hopefully we won't hit that issue.
-      size_t event_len = sizeof(struct inotify_event) + 1024;
+      size_t event_len = sizeof(struct inotify_event) + 4096;
       std::shared_ptr<struct inotify_event> event(
         static_cast<struct inotify_event*>(malloc(event_len)),
         nonstd::malloc_deleter<struct inotify_event>

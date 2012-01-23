@@ -24,7 +24,7 @@ std::vector<std::string> scan_for_uvfs(std::string directory)
   while((readdir_r(dir, ent.get(), &result)) == 0 && result) {
     std::clog << "testing '" << ent->d_name << "'\n";
     if(is_uvf(directory + std::string(ent->d_name))) {
-      uvfs.push_back(ent->d_name);
+      uvfs.push_back(directory + std::string(ent->d_name));
     }
   }
   std::clog << "found " << uvfs.size() << " UVFs.\n";
