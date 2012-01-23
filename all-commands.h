@@ -3,7 +3,8 @@
 
 #include "command.h"
 
-void disconnect(cmd_arg& arg);
-void list(cmd_arg& arg);
+void disconnect(cmd_arg& arg); // end the session
+void list(cmd_arg& arg); // get a list of the files on the server
+void sendf(cmd_arg& arg); // send file
 
 #endif /* UVFSERVER_ALL_COMMANDS_H */

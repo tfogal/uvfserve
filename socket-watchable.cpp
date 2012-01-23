@@ -42,7 +42,7 @@ bool socket_watchable::handle_event(std::vector<std::string>& filelist)
     std::string cmd(buf.get(), buf.get()+bytes);
     cmd = trim(cmd);
     std::cout << "cmd: '" << cmd << "' (" << bytes << " bytes)\n";
-    cmd_arg arg(filelist, this->fd());
+    cmd_arg arg(filelist, this->fd(), cmd /* hack, execute will reset it. */);
     this->execute(cmd, arg);
   }
   if(this->bits & POLLPRI) {

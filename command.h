@@ -9,7 +9,9 @@
 struct cmd_arg {
   std::vector<std::string>& filelist;
   int fd;
-  cmd_arg(std::vector<std::string>& fl, int f) : filelist(fl), fd(f) { }
+  std::string arguments;
+  cmd_arg(std::vector<std::string>& fl, int f, std::string a):
+    filelist(fl), fd(f), arguments(a) { }
 };
 
 struct command {
