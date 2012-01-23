@@ -9,7 +9,7 @@ class stdin_watchable : public fd_watchable {
     stdin_watchable() : fd_watchable(STDIN_FILENO), bits(0) { }
 
     virtual void mark_for_handling(uint32_t flags);
-    virtual bool handle_event();
+    virtual bool handle_event(std::vector<std::string>&);
   private:
     short bits;
 };

@@ -14,19 +14,22 @@
 #include <sys/types.h>
 #include <vector>
 
+#include "all-commands.h"
+#include "command.h"
+#include "fs-scan.h"
 #include "nonstd.h"
 #include "socket-watchable.h"
 #include "shutdown.h"
 #include "stdin-watchable.h"
 #include "watchable.h"
 
-std::vector<std::string> scan_for_uvfs(std::string directory);
 typedef std::vector<std::shared_ptr<watchable> > watchlist;
 watchlist initialize_watches(std::vector<std::string> dirs);
 std::shared_ptr<watchable> initialize_server(size_t port);
 void wait_for_event(const watchlist&);
 void term(int);
 
+// equates the watchable with a given file descriptor
 struct fd_equiv : public std::binary_function<std::shared_ptr<watchable>,
                                               int, bool> {
   bool operator()(const std::shared_ptr<watchable> w, int fd) {
@@ -78,7 +81,7 @@ int main(int argc, char* argv[])
       try {
         for(watchlist::const_iterator ev = info.begin(); ev != info.end();
             ++ev) {
-          handled = (*ev)->handle_event();
+          handled = (*ev)->handle_event(files);
         }
       } catch(const watchable::create & nw) {
         std::clog << "adding new watchable entry " << nw.entry.get() << "\n";
@@ -102,11 +105,6 @@ int main(int argc, char* argv[])
   info.clear();
 
   return 0;
-}
-
-std::vector<std::string> scan_for_uvfs(std::string /*directory*/)
-{
-  std::vector<std::string> rv; return rv;
 }
 
 watchlist initialize_watches(std::vector<std::string> /*dirs*/)
